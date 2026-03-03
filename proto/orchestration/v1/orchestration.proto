@@ -1,0 +1,356 @@
+syntax = "proto3";
+
+package orchestration.v1;
+
+option go_package = "github.com/tinduongecq/test-ecq-sdk/proto/orchestration/v1;orchestrationv1";
+
+import "google/protobuf/timestamp.proto";
+
+// ===== Enums =====
+
+// ProvisionType represents the type of provisioning job
+enum ProvisionType {
+  PROVISION_TYPE_UNSPECIFIED = 0;
+  PROVISION_TYPE_VM = 1;
+  PROVISION_TYPE_CONTAINER = 2;
+  PROVISION_TYPE_EMULATOR = 3;
+}
+
+// Configuration represents the infrastructure configuration
+enum Configuration {
+  CONFIGURATION_UNSPECIFIED = 0;
+  CONFIGURATION_PROXMOX = 1;
+  CONFIGURATION_OPENSTACK = 2;
+  CONFIGURATION_ESXI = 3;
+  CONFIGURATION_AWS = 4;
+  CONFIGURATION_AZURE = 5;
+  CONFIGURATION_GCP = 6;
+}
+
+// Priority represents the job priority
+enum Priority {
+  PRIORITY_UNSPECIFIED = 0;
+  PRIORITY_HIGH = 1;
+  PRIORITY_MEDIUM = 2;
+  PRIORITY_LOW = 3;
+}
+
+// Schedule represents the job schedule type
+enum Schedule {
+  SCHEDULE_UNSPECIFIED = 0;
+  SCHEDULE_IMMEDIATE = 1;
+  SCHEDULE_SCHEDULED = 2;
+}
+
+// TemplateType represents template types
+enum TemplateType {
+  TEMPLATE_TYPE_UNSPECIFIED = 0;
+  TEMPLATE_TYPE_VM = 1;
+  TEMPLATE_TYPE_CONTAINER = 2;
+  TEMPLATE_TYPE_EMULATOR = 3;
+}
+
+// RegistryType represents container registry types
+enum RegistryType {
+  REGISTRY_TYPE_UNSPECIFIED = 0;
+  REGISTRY_TYPE_DOCKER_HUB = 1;
+  REGISTRY_TYPE_PRIVATE = 2;
+}
+
+// OSType represents operating system types
+enum OSType {
+  OS_TYPE_UNSPECIFIED = 0;
+  OS_TYPE_LINUX = 1;
+  OS_TYPE_WINDOWS = 2;
+  OS_TYPE_MACOS = 3;
+  OS_TYPE_ANDROID = 4;
+  OS_TYPE_IOS = 5;
+}
+
+// ===== Core Messages =====
+
+// Resource represents the resource allocation for a VM/container
+message Resource {
+  int32 cpu = 1;
+  string memory = 2;
+  string disk = 3;
+  string network = 4;
+}
+
+// NetworkInterface represents a network interface configuration
+message NetworkInterface {
+  string name = 1;
+  string type = 2;
+  string ip_address = 3;
+  string subnet = 4;
+  string gateway = 5;
+  int32 vlan = 6;
+  bool available = 7;
+  string model = 8;
+  string bridge = 9;
+  bool firewall = 10;
+  string mac_addr = 11;
+}
+
+// NetworkConfig represents network configuration
+message NetworkConfig {
+  repeated NetworkInterface interfaces = 1;
+  string ip_address = 2;
+  string gateway = 3;
+}
+
+// FileConfig represents a file to be injected into the VM
+message FileConfig {
+  string url = 1;
+  string destination_path = 2;
+  string filename = 3;
+}
+
+// ===== Supporting Messages =====
+
+// TemplateInfo represents template information in the response
+message TemplateInfo {
+  string id = 1;
+  string uuid = 2;
+  string name = 3;
+  string image_name = 4;
+  string type = 5;
+  string os_type = 6;
+  string architecture = 7;
+  uint64 disk_size = 8;
+}
+
+// ResourcePoolInfo represents resource pool information in the response
+message ResourcePoolInfo {
+  string id = 1;
+  string uuid = 2;
+  string name = 3;
+  string type = 4;
+  int32 available_cpu = 5;
+  string available_memory = 6;
+  string available_disk = 7;
+}
+
+// Template represents a full template response
+message Template {
+  string id = 1;
+  string uuid = 2;
+  string name = 3;
+  string image_name = 4;
+  RegistryType registry_type = 5;
+  string description = 6;
+  TemplateType type = 7;
+  OSType os_type = 8;
+  string architecture = 9;
+  uint64 disk_size = 10;
+  string cpu = 11;
+  int32 memory = 12;
+  map<string, string> metadata = 13;
+  string resource_pool_id = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+}
+
+// PaginationInfo represents pagination metadata
+message PaginationInfo {
+  int32 page = 1;
+  int32 limit = 2;
+  int64 total = 3;
+  int32 total_pages = 4;
+  bool has_next = 5;
+  bool has_prev = 6;
+}
+
+// ListOptions represents options for listing resources
+message ListOptions {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+}
+
+// TemplateListOptions represents options for listing templates
+message TemplateListOptions {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort_by = 3;
+  string sort_order = 4;
+  TemplateType type = 5;
+  OSType os_type = 6;
+  string architecture = 7;
+  string name = 8;
+}
+
+// ===== Orchestration Request/Response Messages =====
+
+// CreateOrchestrationRequest represents the request to create an orchestration
+message CreateOrchestrationRequest {
+  string name = 1;
+  ProvisionType job_provision_type = 2;
+  string template_id = 3;
+  Configuration configuration = 4;
+  Resource resources = 5;
+  NetworkConfig network = 6;
+  map<string, string> metadata = 7;
+  Priority priority = 8;
+  Schedule schedule = 9;
+  string resource_pool_id = 10;
+  int32 vm_engine_id = 11;
+  FileConfig file = 12;
+}
+
+// CreateOrchestrationResponse represents the response from creating an orchestration
+message CreateOrchestrationResponse {
+  string orchestration_id = 1;
+  string status = 2;
+  string job_id = 3;
+  string message = 4;
+  ResourcePoolInfo resource_pool = 5;
+  TemplateInfo template = 6;
+  string created_at = 7;
+}
+
+// GetOrchestrationStatusRequest represents a request to get orchestration status
+message GetOrchestrationStatusRequest {
+  string orchestration_id = 1;
+}
+
+// GetOrchestrationStatusResponse represents orchestration status
+message GetOrchestrationStatusResponse {
+  string orchestration_id = 1;
+  string status = 2;
+  int32 progress = 3;
+  string message = 4;
+  string job_id = 5;
+  ResourcePoolInfo resource_pool = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+// ListOrchestrationsRequest represents a request to list orchestrations
+message ListOrchestrationsRequest {
+  ListOptions options = 1;
+}
+
+// ListOrchestrationsResponse represents a list of orchestrations
+message ListOrchestrationsResponse {
+  repeated GetOrchestrationStatusResponse items = 1;
+  PaginationInfo pagination = 2;
+}
+
+// CancelOrchestrationRequest represents a request to cancel an orchestration
+message CancelOrchestrationRequest {
+  string orchestration_id = 1;
+}
+
+// CancelOrchestrationResponse represents the response from canceling an orchestration
+message CancelOrchestrationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// ===== VM Operation Messages =====
+
+// ExecuteCommandRequest represents a command execution request
+message ExecuteCommandRequest {
+  string vm_id = 1;
+  repeated string command = 2;
+}
+
+// ExecuteCommandResponse represents a command execution response
+message ExecuteCommandResponse {
+  string output = 1;
+  int32 exit_code = 2;
+}
+
+// StartVMRequest represents a request to start a VM
+message StartVMRequest {
+  string vm_id = 1;
+}
+
+// StartVMResponse represents the response from starting a VM
+message StartVMResponse {
+  string orchestration_id = 1;
+  string status = 2;
+  string job_id = 3;
+  string message = 4;
+  ResourcePoolInfo resource_pool = 5;
+  TemplateInfo template = 6;
+  string created_at = 7;
+}
+
+// StopVMRequest represents a request to stop a VM
+message StopVMRequest {
+  string vm_id = 1;
+}
+
+// StopVMResponse represents the response from stopping a VM
+message StopVMResponse {
+  string orchestration_id = 1;
+  string status = 2;
+  string job_id = 3;
+  string message = 4;
+  ResourcePoolInfo resource_pool = 5;
+  TemplateInfo template = 6;
+  string created_at = 7;
+}
+
+// RemoveVMRequest represents a request to remove a VM
+message RemoveVMRequest {
+  string vm_id = 1;
+}
+
+// RemoveVMResponse represents the response from removing a VM
+message RemoveVMResponse {
+  string orchestration_id = 1;
+  string status = 2;
+  string job_id = 3;
+  string message = 4;
+  ResourcePoolInfo resource_pool = 5;
+  TemplateInfo template = 6;
+  string created_at = 7;
+}
+
+// ===== Template Messages =====
+
+// GetTemplateRequest represents a request to get a template
+message GetTemplateRequest {
+  string template_id = 1;
+}
+
+// GetTemplateResponse represents the response from getting a template
+message GetTemplateResponse {
+  Template template = 1;
+}
+
+// ListTemplatesRequest represents a request to list templates
+message ListTemplatesRequest {
+  TemplateListOptions options = 1;
+}
+
+// ListTemplatesResponse represents a paginated list of templates
+message ListTemplatesResponse {
+  repeated Template items = 1;
+  PaginationInfo pagination = 2;
+}
+
+// ===== gRPC Service Definition =====
+
+// OrchestrationService provides gRPC methods for orchestration operations
+service OrchestrationService {
+  // Orchestration operations
+  rpc CreateOrchestration(CreateOrchestrationRequest) returns (CreateOrchestrationResponse);
+  rpc GetOrchestrationStatus(GetOrchestrationStatusRequest) returns (GetOrchestrationStatusResponse);
+  rpc ListOrchestrations(ListOrchestrationsRequest) returns (ListOrchestrationsResponse);
+  rpc CancelOrchestration(CancelOrchestrationRequest) returns (CancelOrchestrationResponse);
+
+  // VM operations
+  rpc ExecuteCommand(ExecuteCommandRequest) returns (ExecuteCommandResponse);
+  rpc StartVM(StartVMRequest) returns (StartVMResponse);
+  rpc StopVM(StopVMRequest) returns (StopVMResponse);
+  rpc RemoveVM(RemoveVMRequest) returns (RemoveVMResponse);
+
+  // Template operations
+  rpc GetTemplate(GetTemplateRequest) returns (GetTemplateResponse);
+  rpc ListTemplates(ListTemplatesRequest) returns (ListTemplatesResponse);
+}
